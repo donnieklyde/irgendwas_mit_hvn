@@ -4,13 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RatingControl from './RatingControl';
 import AIRatingDisplay from './AIRatingDisplay';
-import { RefreshCw, Plus } from 'lucide-react';
+import AuthModal from './AuthModal';
+import { RefreshCw, Plus, User as UserIcon, LogOut } from 'lucide-react';
 
 interface Poem {
     id: string;
     content: string;
     author: {
-        email: string;
+        username: string;
     };
     ratings: { value: number, userId: string }[];
     aiRating?: {
@@ -20,16 +21,35 @@ interface Poem {
     createdAt: string;
 }
 
+interface User {
+    id: string;
+    username: string;
+    email?: string | null;
+}
+
 export default function PoemThread() {
     const [poem, setPoem] = useState<Poem | null>(null);
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
     const [newPoemContent, setNewPoemContent] = useState("");
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [showAuthModal, setShowAuthModal] = useState(false);
+
+    const checkSession = useCallback(async () => {
+        try {
+            const res = await fetch('/api/auth/me');
+            const data = await res.json();
+            if (data.user) {
+                setCurrentUser(data.user);
+            }
+        } catch (e) {
+            console.error("Session check failed", e);
+        }
+    }, []);
 
     const fetchPoem = useCallback(async () => {
         setLoading(true);
         try {
-            // Fetch latest or random (currently API just gets latest)
             const res = await fetch('/api/poems');
             const data = await res.json();
             if (data.poem) {
@@ -45,29 +65,28 @@ export default function PoemThread() {
     }, []);
 
     useEffect(() => {
+        checkSession();
         fetchPoem();
-    }, [fetchPoem]);
+    }, [checkSession, fetchPoem]);
 
     const handleRate = async (value: number) => {
         if (!poem) return;
+        if (!currentUser) {
+            setShowAuthModal(true);
+            return;
+        }
         try {
-            // Optimistic update (optional, but good for UX)
-            // For now just sending request
             await fetch('/api/ratings', {
                 method: 'POST',
                 body: JSON.stringify({
                     poemId: poem.id,
-                    value,
-                    userEmail: "test@user.com" // simplified auth
+                    value
                 })
             });
 
-            // Refresh to see updated ratings/AI stats if any logic depends on it
-            // Or just trigger AI rating if not present
             if (!poem.aiRating) {
                 triggerAIRating(poem.id);
             }
-
         } catch (e) {
             console.error(e);
         }
@@ -88,29 +107,62 @@ export default function PoemThread() {
 
     const handleCreate = async () => {
         if (!newPoemContent.trim()) return;
+        if (!currentUser) {
+            setShowAuthModal(true);
+            return;
+        }
         try {
-            setCreating(true);
             const res = await fetch('/api/poems', {
                 method: 'POST',
                 body: JSON.stringify({
-                    content: newPoemContent,
-                    authorEmail: 'test@user.com' // simplified
+                    content: newPoemContent
                 })
             });
             const createdPoem = await res.json();
-            setPoem(createdPoem); // Show new poem immediately
+            setPoem(createdPoem);
             setNewPoemContent("");
             setCreating(false);
-            // Trigger AI immediately
             triggerAIRating(createdPoem.id);
         } catch (e) {
             console.error(e);
-            setCreating(false);
+        }
+    };
+
+    const handleLogout = async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        setCurrentUser(null);
+    };
+
+    const handlePlusClick = () => {
+        if (!currentUser) {
+            setShowAuthModal(true);
+        } else {
+            setCreating(true);
         }
     };
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-6 relative text-white">
+
+            {/* Auth/User Indicator */}
+            <div className="fixed top-8 left-8 z-50 flex items-center gap-4">
+                {currentUser ? (
+                    <div className="flex items-center gap-3 glass-panel px-4 py-2 rounded-full">
+                        <UserIcon size={14} className="text-white/40" />
+                        <span className="text-[10px] uppercase tracking-widest font-mono">{currentUser.username}</span>
+                        <button onClick={handleLogout} className="text-white/20 hover:text-white transition-all ml-2">
+                            <LogOut size={14} />
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => setShowAuthModal(true)}
+                        className="glass-panel px-6 py-2 rounded-full text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all border border-white/10"
+                    >
+                        Login
+                    </button>
+                )}
+            </div>
 
             {/* Creation Trigger - Bottom Right */}
             {!creating && (
@@ -118,7 +170,7 @@ export default function PoemThread() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    onClick={() => setCreating(true)}
+                    onClick={handlePlusClick}
                     className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-white/20 to-white/10 hover:from-white/30 hover:to-white/20 backdrop-blur-md border border-white/20 shadow-2xl transition-all z-50 flex items-center justify-center group"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
@@ -126,6 +178,12 @@ export default function PoemThread() {
                     <Plus className="w-8 h-8 text-white group-hover:rotate-90 transition-transform duration-300" />
                 </motion.button>
             )}
+
+            <AuthModal
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                onSuccess={(user) => setCurrentUser(user)}
+            />
 
             <AnimatePresence mode="wait">
                 {creating ? (
@@ -205,8 +263,11 @@ export default function PoemThread() {
                                 {poem.content}
                             </p>
 
-                            <div className="mt-10 pt-8 border-t border-white/5 text-center">
-                                <div className="text-[9px] text-white/20 font-mono uppercase tracking-[0.3em]">
+                            <div className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center gap-2">
+                                <div className="text-[10px] text-white font-mono uppercase tracking-[0.2em] opacity-80">
+                                    By {poem.author.username}
+                                </div>
+                                <div className="text-[8px] text-white/20 font-mono uppercase tracking-[0.3em]">
                                     {new Date(poem.createdAt).toLocaleDateString('en-US', {
                                         year: 'numeric',
                                         month: 'long',
@@ -245,7 +306,7 @@ export default function PoemThread() {
                             <p className="text-2xl font-serif font-light text-white/70 mb-4">The canvas awaits</p>
                             <p className="text-sm text-white/40 mb-8">No poems yet. Be the first to compose.</p>
                             <button
-                                onClick={() => setCreating(true)}
+                                onClick={handlePlusClick}
                                 className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full uppercase tracking-widest text-xs transition-all border border-white/20"
                             >
                                 Begin

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getSession } from '@/lib/auth';
 
 export async function GET(request: Request) {
     try {
@@ -13,7 +14,9 @@ export async function GET(request: Request) {
             cursor: cursor ? { id: cursor } : undefined,
             orderBy: { createdAt: 'desc' },
             include: {
-                author: true,
+                author: {
+                    select: { username: true }
+                },
                 aiRating: true,
                 ratings: true,
             },
@@ -33,30 +36,24 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
-        const { content, authorEmail } = body; // Simplified for now, assuming email passing or auth
-
-        if (!content || !authorEmail) {
-            return NextResponse.json({ error: 'Missing content or author' }, { status: 400 });
+        const session = await getSession();
+        if (!session) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Find or create user (simplified auth)
-        let user = await prisma.user.findUnique({ where: { email: authorEmail } });
-        if (!user) {
-            user = await prisma.user.create({
-                data: { email: authorEmail },
-            });
+        const body = await request.json();
+        const { content } = body;
+
+        if (!content) {
+            return NextResponse.json({ error: 'Missing content' }, { status: 400 });
         }
 
         const poem = await prisma.poem.create({
             data: {
                 content,
-                authorId: user.id,
+                authorId: session.userId,
             },
         });
-
-        // Trigger AI rating in background (or simpler: call it here)
-        // For now, we'll just return the poem and let the client trigger AI or do it async
 
         return NextResponse.json(poem);
     } catch (error) {
