@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RatingControl from './RatingControl';
-import AIRatingDisplay from './AIRatingDisplay';
 import { RefreshCw, Plus } from 'lucide-react';
 
 interface Poem {
@@ -13,10 +12,6 @@ interface Poem {
         username?: string | null;
     } | null;
     ratings: { value: number, userId: string }[];
-    aiRating?: {
-        value: number;
-        analysis: string;
-    } | null;
     createdAt: string;
 }
 
@@ -57,27 +52,10 @@ export default function PoemThread() {
                     value
                 })
             });
-
-            if (!poem.aiRating) {
-                triggerAIRating(poem.id);
-            }
         } catch (e) {
             console.error(e);
         }
     };
-
-    const triggerAIRating = async (poemId: string) => {
-        try {
-            const res = await fetch('/api/ai-rate', {
-                method: 'POST',
-                body: JSON.stringify({ poemId })
-            });
-            const aiData = await res.json();
-            setPoem(prev => prev ? { ...prev, aiRating: aiData } : null);
-        } catch (e) {
-            console.error(e);
-        }
-    }
 
     const handleCreate = async () => {
         if (!newPoemContent.trim()) return;
@@ -92,7 +70,6 @@ export default function PoemThread() {
             setPoem(createdPoem);
             setNewPoemContent("");
             setCreating(false);
-            triggerAIRating(createdPoem.id);
         } catch (e) {
             console.error(e);
         }
@@ -214,15 +191,6 @@ export default function PoemThread() {
                                 poemId={poem.id}
                                 onRate={handleRate}
                             />
-
-                            {poem.aiRating && (
-                                <div className="w-full border-t border-white/5 pt-16">
-                                    <AIRatingDisplay
-                                        value={poem.aiRating.value}
-                                        analysis={poem.aiRating.analysis}
-                                    />
-                                </div>
-                            )}
                         </div>
 
                     </motion.div>

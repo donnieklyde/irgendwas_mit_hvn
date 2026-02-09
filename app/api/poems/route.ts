@@ -16,7 +16,6 @@ export async function GET(request: Request) {
                 author: {
                     select: { username: true }
                 },
-                aiRating: true,
                 ratings: true,
             },
         });

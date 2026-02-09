@@ -31,7 +31,6 @@ model Poem {
   author    User     @relation(fields: [authorId], references: [id])
   
   ratings   Rating[]
-  aiRating  AIRating?
 }
 
 model Rating {
@@ -48,12 +47,3 @@ model Rating {
   @@unique([userId, poemId])
 }
 
-model AIRating {
-  id        String   @id @default(cuid())
-  value     Int      // 0-10
-  analysis  String?
-  createdAt DateTime @default(now())
-  
-  poemId    String   @unique
-  poem      Poem     @relation(fields: [poemId], references: [id])
-}
