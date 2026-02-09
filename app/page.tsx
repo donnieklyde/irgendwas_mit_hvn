@@ -1,8 +1,6 @@
-import PoemThread from '@/components/PoemThread';
-
 export default function Home() {
   return (
-    <main className="min-h-screen bg-black text-white selection:bg-white selection:text-black relative overflow-hidden">
+    <main className="min-h-screen bg-black relative overflow-hidden">
       {/* Video Background */}
       <video
         autoPlay
@@ -16,11 +14,6 @@ export default function Home() {
 
       {/* Overlay for readability */}
       <div className="fixed inset-0 video-overlay backdrop-blur-[1px] z-[1]" />
-
-      {/* Content */}
-      <div className="relative z-10">
-        <PoemThread />
-      </div>
     </main>
   );
 }
