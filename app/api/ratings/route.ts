@@ -1,24 +1,29 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
 
 export async function POST(request: Request) {
     try {
-        const session = await getSession();
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
         const { poemId, value } = await request.json();
 
         if (!poemId || value === undefined) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
+        // Get or create the 'Anonymous' user
+        let guestUser = await prisma.user.findFirst({
+            where: { username: "Anonymous" }
+        });
+
+        if (!guestUser) {
+            guestUser = await prisma.user.create({
+                data: { username: "Anonymous" }
+            });
+        }
+
         const rating = await prisma.rating.upsert({
             where: {
                 userId_poemId: {
-                    userId: session.userId,
+                    userId: guestUser.id,
                     poemId: poemId,
                 },
             },
@@ -26,7 +31,7 @@ export async function POST(request: Request) {
                 value: value,
             },
             create: {
-                userId: session.userId,
+                userId: guestUser.id,
                 poemId: poemId,
                 value: value,
             },

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
 
 export async function GET(request: Request) {
     try {
@@ -36,11 +35,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
-        const session = await getSession();
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
         const body = await request.json();
         const { content } = body;
 
@@ -48,10 +42,21 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing content' }, { status: 400 });
         }
 
+        // Get or create the 'Anonymous' user
+        let guestUser = await prisma.user.findFirst({
+            where: { username: "Anonymous" }
+        });
+
+        if (!guestUser) {
+            guestUser = await prisma.user.create({
+                data: { username: "Anonymous" }
+            });
+        }
+
         const poem = await prisma.poem.create({
             data: {
                 content,
-                authorId: session.userId,
+                authorId: guestUser.id,
             },
         });
 
