@@ -15,28 +15,10 @@
 body {
   color: var(--foreground);
   background-color: var(--background);
-  background-image: url('/mirgehtsgut.gif');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
-  position: relative;
 }
 
-/* Dark overlay to ensure text readability against the GIF */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  /* Adjust opacity as needed */
-  backdrop-filter: blur(3px);
-  z-index: -1;
-}
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
@@ -62,11 +44,10 @@ body::before {
   }
 
   .glass-panel {
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    /* Finer border */
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
 
   .glow-text {

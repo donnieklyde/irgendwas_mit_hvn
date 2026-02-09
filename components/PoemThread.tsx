@@ -112,38 +112,75 @@ export default function PoemThread() {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-6 relative text-white">
 
-            {/* Creation Overlay Trigger */}
-            <button
-                onClick={() => setCreating(!creating)}
-                className="fixed top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all z-50 glass-panel border-none"
-            >
-                <Plus className={creating ? "rotate-45 transition-transform" : "transition-transform"} />
-            </button>
+            {/* Creation Trigger - Bottom Right */}
+            {!creating && (
+                <motion.button
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    onClick={() => setCreating(true)}
+                    className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-white/20 to-white/10 hover:from-white/30 hover:to-white/20 backdrop-blur-md border border-white/20 shadow-2xl transition-all z-50 flex items-center justify-center group"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                >
+                    <Plus className="w-8 h-8 text-white group-hover:rotate-90 transition-transform duration-300" />
+                </motion.button>
+            )}
 
             <AnimatePresence mode="wait">
                 {creating ? (
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="w-full max-w-2xl flex flex-col gap-6 items-center relative z-40 glass-panel p-10 rounded-2xl"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6"
                         key="create-mode"
                     >
-                        <h2 className="text-xs uppercase tracking-[0.2em] text-white/40 mb-2">New Composition</h2>
-                        <textarea
-                            value={newPoemContent}
-                            onChange={(e) => setNewPoemContent(e.target.value)}
-                            placeholder="Write your verse..."
-                            className="w-full h-64 bg-transparent text-2xl md:text-3xl font-serif text-center outline-none resize-none placeholder:text-white/10 text-white p-4 leading-relaxed"
-                            autoFocus
-                        />
-                        <button
-                            onClick={handleCreate}
-                            disabled={!newPoemContent.trim()}
-                            className="px-10 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-gray-200 disabled:opacity-50 transition-all rounded-full hover:scale-105"
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="w-full max-w-3xl glass-panel p-12 rounded-3xl relative"
                         >
-                            Publish
-                        </button>
+                            {/* Close Button */}
+                            <button
+                                onClick={() => setCreating(false)}
+                                className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center"
+                            >
+                                <Plus className="w-6 h-6 rotate-45" />
+                            </button>
+
+                            <div className="flex flex-col gap-8">
+                                <div className="text-center">
+                                    <h2 className="text-[10px] uppercase tracking-[0.3em] text-white/30 mb-2">Compose</h2>
+                                    <div className="h-px w-24 bg-gradient-to-r from-transparent via-white/20 to-transparent mx-auto" />
+                                </div>
+
+                                <textarea
+                                    value={newPoemContent}
+                                    onChange={(e) => setNewPoemContent(e.target.value)}
+                                    placeholder="Let the words flow..."
+                                    className="w-full h-80 bg-transparent text-3xl md:text-4xl font-serif text-center outline-none resize-none placeholder:text-white/10 text-white leading-[1.6] font-light"
+                                    autoFocus
+                                />
+
+                                <div className="flex justify-center gap-4">
+                                    <button
+                                        onClick={() => setCreating(false)}
+                                        className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-mono uppercase tracking-widest text-xs transition-all rounded-full"
+                                    >
+                                        Discard
+                                    </button>
+                                    <button
+                                        onClick={handleCreate}
+                                        disabled={!newPoemContent.trim()}
+                                        className="px-12 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-full hover:scale-105 shadow-lg shadow-white/20"
+                                    >
+                                        Publish
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
                     </motion.div>
                 ) : loading ? (
                     <motion.div
@@ -198,10 +235,23 @@ export default function PoemThread() {
 
                     </motion.div>
                 ) : (
-                    <div className="text-white/50 text-center font-serif italic text-xl">
-                        <p>The void is empty.</p>
-                        <button onClick={() => setCreating(true)} className="mt-4 text-white hover:text-gray-300 underline underline-offset-4 decoration-white/30 hover:decoration-white transition-all">Create the first thread</button>
-                    </div>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="text-center"
+                    >
+                        <div className="glass-panel p-16 rounded-3xl max-w-md">
+                            <div className="text-6xl mb-6">✨</div>
+                            <p className="text-2xl font-serif font-light text-white/70 mb-4">The canvas awaits</p>
+                            <p className="text-sm text-white/40 mb-8">No poems yet. Be the first to compose.</p>
+                            <button
+                                onClick={() => setCreating(true)}
+                                className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full uppercase tracking-widest text-xs transition-all border border-white/20"
+                            >
+                                Begin
+                            </button>
+                        </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>
