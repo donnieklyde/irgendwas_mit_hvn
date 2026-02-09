@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RatingControl from './RatingControl';
-import { RefreshCw, Plus } from 'lucide-react';
+import { RefreshCw, Plus, Minus, MoveRight } from 'lucide-react';
 
 interface Poem {
     id: string;
@@ -20,6 +20,7 @@ export default function PoemThread() {
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
     const [newPoemContent, setNewPoemContent] = useState("");
+    const [publishStatus, setPublishStatus] = useState<'idle' | 'publishing' | 'success'>('idle');
 
     const fetchPoem = useCallback(async () => {
         setLoading(true);
@@ -59,6 +60,7 @@ export default function PoemThread() {
 
     const handleCreate = async () => {
         if (!newPoemContent.trim()) return;
+        setPublishStatus('publishing');
         try {
             const res = await fetch('/api/poems', {
                 method: 'POST',
@@ -67,29 +69,38 @@ export default function PoemThread() {
                 })
             });
             const createdPoem = await res.json();
-            setPoem(createdPoem);
-            setNewPoemContent("");
-            setCreating(false);
+
+            setPublishStatus('success');
+            setTimeout(() => {
+                setPoem(createdPoem);
+                setNewPoemContent("");
+                setCreating(false);
+                setPublishStatus('idle');
+            }, 800);
         } catch (e) {
             console.error(e);
+            setPublishStatus('idle');
         }
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-6 relative text-white">
+        <div className="min-h-screen flex flex-col items-center justify-center p-8 md:p-12 relative text-white font-inter">
 
-            {/* Creation Trigger - Bottom Right */}
+            {/* Header / Branding */}
+            <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50 text-center pointer-events-none">
+                <span className="text-[10px] uppercase tracking-[0.5em] text-white/40 font-bold block mb-1">HVN</span>
+                <div className="h-px w-8 bg-white/10 mx-auto" />
+            </div>
+
+            {/* Creation Trigger */}
             {!creating && (
                 <motion.button
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
                     onClick={() => setCreating(true)}
-                    className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-white/20 to-white/10 hover:from-white/30 hover:to-white/20 backdrop-blur-md border border-white/20 shadow-2xl transition-all z-50 flex items-center justify-center group"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
+                    className="fixed bottom-12 right-12 md:bottom-16 md:right-16 w-14 h-14 md:w-16 md:h-16 rounded-full glass-panel flex items-center justify-center hover:scale-110 transition-all z-50 shadow-2xl group border-white/20"
                 >
-                    <Plus className="w-8 h-8 text-white group-hover:rotate-90 transition-transform duration-300" />
+                    <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
                 </motion.button>
             )}
 
@@ -99,50 +110,63 @@ export default function PoemThread() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6"
+                        className="fixed inset-0 bg-black/60 backdrop-blur-3xl z-[100] flex items-center justify-center p-6 md:p-12"
                         key="create-mode"
                     >
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="w-full max-w-3xl glass-panel p-12 rounded-3xl relative"
+                            initial={{ scale: 0.98, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.98, opacity: 0, y: 20 }}
+                            className="w-full max-w-4xl glass-panel p-10 md:p-20 rounded-[40px] relative overflow-hidden"
                         >
+                            {/* Decorative background element */}
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
                             {/* Close Button */}
                             <button
                                 onClick={() => setCreating(false)}
-                                className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center"
+                                className="absolute top-8 right-8 w-12 h-12 rounded-full hover:bg-white/10 transition-all flex items-center justify-center border border-white/5"
                             >
-                                <Plus className="w-6 h-6 rotate-45" />
+                                <Minus className="w-5 h-5" />
                             </button>
 
-                            <div className="flex flex-col gap-8">
+                            <div className="flex flex-col gap-12">
                                 <div className="text-center">
-                                    <h2 className="text-[10px] uppercase tracking-[0.3em] text-white/30 mb-2">Compose</h2>
-                                    <div className="h-px w-24 bg-gradient-to-r from-transparent via-white/20 to-transparent mx-auto" />
+                                    <h2 className="text-[9px] uppercase tracking-[0.4em] text-white/30 mb-2">The Canvas Awaits</h2>
+                                    <div className="h-px w-12 bg-white/10 mx-auto" />
                                 </div>
 
                                 <textarea
                                     value={newPoemContent}
                                     onChange={(e) => setNewPoemContent(e.target.value)}
-                                    placeholder="Let the words flow..."
-                                    className="w-full h-80 bg-transparent text-3xl md:text-4xl font-serif text-center outline-none resize-none placeholder:text-white/10 text-white leading-[1.6] font-light"
+                                    placeholder="Enter the void..."
+                                    className="w-full h-[400px] md:h-[500px] bg-transparent text-4xl md:text-5xl lg:text-6xl font-playfair text-center outline-none resize-none placeholder:text-white/5 text-white leading-tight font-light caret-white focus:placeholder:text-transparent transition-all"
                                     autoFocus
                                 />
 
-                                <div className="flex justify-center gap-4">
+                                <div className="flex justify-center items-center gap-8">
                                     <button
                                         onClick={() => setCreating(false)}
-                                        className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-mono uppercase tracking-widest text-xs transition-all rounded-full"
+                                        className="text-[10px] uppercase tracking-widest text-white/30 hover:text-white transition-all font-bold"
                                     >
                                         Discard
                                     </button>
+
                                     <button
                                         onClick={handleCreate}
-                                        disabled={!newPoemContent.trim()}
-                                        className="px-12 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-full hover:scale-105 shadow-lg shadow-white/20"
+                                        disabled={!newPoemContent.trim() || publishStatus !== 'idle'}
+                                        className="group flex items-center gap-4 bg-white text-black px-10 py-4 rounded-full font-bold uppercase tracking-widest text-[10px] hover:scale-105 transition-all disabled:opacity-20 shadow-xl shadow-white/5"
                                     >
-                                        Publish
+                                        {publishStatus === 'publishing' ? (
+                                            <RefreshCw className="w-4 h-4 animate-spin" />
+                                        ) : publishStatus === 'success' ? (
+                                            "Sent into Ether"
+                                        ) : (
+                                            <>
+                                                Release
+                                                <MoveRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -154,59 +178,73 @@ export default function PoemThread() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         key="loader"
+                        className="flex flex-col items-center gap-4"
                     >
-                        <RefreshCw className="animate-spin text-white/20" />
+                        <RefreshCw className="animate-spin text-white/20 w-8 h-8" />
+                        <span className="text-[8px] uppercase tracking-[0.5em] text-white/20">Summoning Verses</span>
                     </motion.div>
                 ) : poem ? (
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
+                        initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -30 }}
+                        exit={{ opacity: 0, y: -40 }}
                         key={poem.id}
-                        className="flex flex-col items-center w-full max-w-4xl"
+                        className="flex flex-col items-center w-full max-w-5xl"
                     >
-                        {/* Poem Content */}
-                        <div className="glass-panel p-12 md:p-16 rounded-3xl shadow-2xl w-full mb-16">
-                            <p className="text-4xl md:text-6xl lg:text-7xl font-serif font-light leading-[1.4] text-center whitespace-pre-wrap text-balance text-white">
+                        {/* Poem Display */}
+                        <div className="glass-panel p-16 md:p-24 lg:p-32 rounded-[60px] shadow-[0_40px_100px_rgba(0,0,0,0.6)] w-full relative group">
+                            <div className="absolute top-12 left-12 opacity-5 text-8xl font-playfair pointer-events-none">"</div>
+
+                            <p className="text-5xl md:text-7xl lg:text-8xl font-playfair font-light leading-[1.2] text-center whitespace-pre-wrap text-white selection:bg-white selection:text-black">
                                 {poem.content}
                             </p>
 
-                            <div className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center gap-2">
-                                <div className="text-[10px] text-white font-mono uppercase tracking-[0.2em] opacity-80">
-                                    By {poem.author?.username || "Anonymous"}
-                                </div>
-                                <div className="text-[8px] text-white/20 font-mono uppercase tracking-[0.3em]">
-                                    {new Date(poem.createdAt).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    })}
+                            <div className="mt-20 flex flex-col items-center gap-4">
+                                <div className="h-px w-16 bg-white/10" />
+                                <div className="flex items-center gap-6">
+                                    <div className="text-[10px] text-white/60 font-bold uppercase tracking-[0.2em]">
+                                        {poem.author?.username || "Anonymous"}
+                                    </div>
+                                    <div className="w-1 h-1 rounded-full bg-white/20" />
+                                    <div className="text-[9px] text-white/20 tracking-[0.3em] font-medium">
+                                        {new Date(poem.createdAt).toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric'
+                                        })}
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Ratings Section */}
-                        <div className="flex flex-col items-center gap-16 w-full max-w-2xl">
+                        {/* Rating Control Section */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.5 }}
+                            className="mt-24 w-full flex flex-col items-center gap-12"
+                        >
+                            <div className="text-[8px] uppercase tracking-[0.5em] text-white/20">Acknowledge</div>
                             <RatingControl
                                 poemId={poem.id}
                                 onRate={handleRate}
                             />
-                        </div>
+                        </motion.div>
 
                     </motion.div>
                 ) : (
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
+                        initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="text-center"
                     >
-                        <div className="glass-panel p-16 rounded-3xl max-w-md">
-                            <div className="text-6xl mb-6">✨</div>
-                            <p className="text-2xl font-serif font-light text-white/70 mb-4">The canvas awaits</p>
-                            <p className="text-sm text-white/40 mb-8">No poems yet. Be the first to compose.</p>
+                        <div className="glass-panel p-20 md:p-32 rounded-[50px] max-w-xl">
+                            <div className="text-8xl mb-12 opacity-40">✦</div>
+                            <h3 className="text-3xl font-playfair font-light mb-6 tracking-wide">The Sanctuary is Empty</h3>
+                            <p className="text-sm text-white/30 mb-12 font-medium tracking-widest uppercase">Be the one to break the silence</p>
                             <button
                                 onClick={() => setCreating(true)}
-                                className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full uppercase tracking-widest text-xs transition-all border border-white/20"
+                                className="px-16 py-5 bg-white text-black rounded-full uppercase tracking-[0.3em] text-[10px] font-bold hover:scale-105 transition-all"
                             >
                                 Begin
                             </button>

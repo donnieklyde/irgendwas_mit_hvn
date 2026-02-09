@@ -25,30 +25,28 @@ export default function RatingControl({ poemId, onRate, initialValue }: RatingCo
     const displayValue = hoverValue ?? selectedValue;
 
     return (
-        <div className="flex flex-col items-center gap-8 py-8 w-full max-w-lg relative">
+        <div className="flex flex-col items-center gap-10 py-8 w-full max-w-lg relative group/rating">
             {/* Title */}
             <div className="text-center">
-                <h3 className="text-[10px] uppercase tracking-[0.3em] text-white/30 mb-2">Your Valuation</h3>
                 <AnimatePresence mode="wait">
-                    {displayValue !== null && (
+                    {displayValue !== null ? (
                         <motion.div
                             key={displayValue}
-                            initial={{ opacity: 0, scale: 0.8 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            className="text-7xl font-serif font-light text-white"
+                            exit={{ opacity: 0, scale: 1.05 }}
+                            className="text-8xl md:text-9xl font-playfair font-light text-white tracking-tight"
                         >
                             {displayValue}
                         </motion.div>
+                    ) : (
+                        <div className="text-8xl md:text-9xl font-playfair font-light text-white/5 tracking-tight">—</div>
                     )}
                 </AnimatePresence>
-                {displayValue === null && (
-                    <div className="text-7xl font-serif font-light text-white/10">—</div>
-                )}
             </div>
 
             {/* Rating Dots */}
-            <div className="flex items-center justify-center gap-3 w-full flex-wrap">
+            <div className="flex items-center justify-center gap-4 w-full flex-wrap px-4">
                 {ratings.map((value) => {
                     const isActive = displayValue !== null && displayValue >= value;
                     const isSelected = selectedValue === value;
@@ -56,15 +54,15 @@ export default function RatingControl({ poemId, onRate, initialValue }: RatingCo
                     return (
                         <motion.button
                             key={value}
-                            whileHover={{ scale: 1.3 }}
-                            whileTap={{ scale: 0.9 }}
+                            whileHover={{ scale: 1.4 }}
+                            whileTap={{ scale: 0.8 }}
                             className={clsx(
-                                "rounded-full transition-all duration-300 relative",
-                                isActive ? "bg-white shadow-lg shadow-white/20" : "bg-white/10 hover:bg-white/30"
+                                "rounded-full transition-all duration-500 relative",
+                                isActive ? "bg-white shadow-[0_0_20px_rgba(255,255,255,0.3)]" : "bg-white/5 hover:bg-white/20 border border-white/5"
                             )}
                             style={{
-                                width: isSelected ? '16px' : '12px',
-                                height: isSelected ? '16px' : '12px',
+                                width: isSelected ? '14px' : '10px',
+                                height: isSelected ? '14px' : '10px',
                             }}
                             onMouseEnter={() => setHoverValue(value)}
                             onMouseLeave={() => setHoverValue(null)}
@@ -74,8 +72,8 @@ export default function RatingControl({ poemId, onRate, initialValue }: RatingCo
                             {isSelected && (
                                 <motion.div
                                     layoutId="selected-ring"
-                                    className="absolute inset-0 rounded-full border-2 border-white"
-                                    style={{ width: '24px', height: '24px', left: '-4px', top: '-4px' }}
+                                    className="absolute inset-0 rounded-full border border-white/40 ring-4 ring-white/5"
+                                    style={{ width: '22px', height: '22px', left: '-4px', top: '-4px' }}
                                 />
                             )}
                         </motion.button>
@@ -84,21 +82,21 @@ export default function RatingControl({ poemId, onRate, initialValue }: RatingCo
             </div>
 
             {/* Labels */}
-            <div className="flex justify-between w-full px-4 text-[9px] font-mono text-white/20 uppercase tracking-widest">
-                <span>Void</span>
-                <span>Transcendent</span>
+            <div className="flex justify-between w-full px-6 text-[8px] font-sans text-white/10 uppercase tracking-[0.4em] font-bold">
+                <span>Echo</span>
+                <span>Sublime</span>
             </div>
 
             {/* Confirmation */}
             <AnimatePresence>
                 {showConfirm && (
                     <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute -bottom-4 text-xs text-white/50 italic"
+                        initial={{ opacity: 0, filter: 'blur(10px)' }}
+                        animate={{ opacity: 1, filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, filter: 'blur(10px)' }}
+                        className="absolute -bottom-6 text-[9px] text-white/40 uppercase tracking-[0.2em] font-bold"
                     >
-                        Recorded
+                        Marked
                     </motion.div>
                 )}
             </AnimatePresence>

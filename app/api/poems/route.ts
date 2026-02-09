@@ -42,7 +42,7 @@ export async function POST(request: Request) {
         }
 
         // Get or create the 'Anonymous' user
-        let guestUser = await prisma.user.findFirst({
+        let guestUser = await prisma.user.findUnique({
             where: { username: "Anonymous" }
         });
 
@@ -57,6 +57,12 @@ export async function POST(request: Request) {
                 content,
                 authorId: guestUser.id,
             },
+            include: {
+                author: {
+                    select: { username: true }
+                },
+                ratings: true
+            }
         });
 
         return NextResponse.json(poem);

@@ -15,7 +15,7 @@ export default function Home() {
       </video>
 
       {/* Overlay for readability */}
-      <div className="fixed inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70 backdrop-blur-[2px] z-[1]" />
+      <div className="fixed inset-0 video-overlay backdrop-blur-[1px] z-[1]" />
 
       {/* Content */}
       <div className="relative z-10">
