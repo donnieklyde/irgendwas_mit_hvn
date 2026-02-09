@@ -18,7 +18,6 @@ model User {
   updatedAt DateTime @updatedAt
   
   poems     Poem[]
-  ratings   Rating[]
 }
 
 model Poem {
@@ -29,21 +28,5 @@ model Poem {
   
   authorId  String
   author    User     @relation(fields: [authorId], references: [id])
-  
-  ratings   Rating[]
-}
-
-model Rating {
-  id        String   @id @default(cuid())
-  value     Int      // 0-10
-  createdAt DateTime @default(now())
-  
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  
-  poemId    String
-  poem      Poem     @relation(fields: [poemId], references: [id])
-
-  @@unique([userId, poemId])
 }
 

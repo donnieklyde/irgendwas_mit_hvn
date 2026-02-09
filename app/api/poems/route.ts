@@ -3,28 +3,18 @@ import prisma from '@/lib/prisma';
 
 export async function GET(request: Request) {
     try {
-        const { searchParams } = new URL(request.url);
-        const cursor = searchParams.get('cursor');
-        const take = 1; // Thread style, one by one
-
         const poems = await prisma.poem.findMany({
-            take: take,
-            skip: cursor ? 1 : 0,
-            cursor: cursor ? { id: cursor } : undefined,
+            take: 50, // Fetch a reasonable list of recent poems
             orderBy: { createdAt: 'desc' },
             include: {
                 author: {
                     select: { username: true }
-                },
-                ratings: true,
+                }
             },
         });
 
-        const nextCursor = poems.length > 0 ? poems[poems.length - 1].id : null;
-
         return NextResponse.json({
-            poem: poems[0] || null,
-            nextCursor,
+            poems: poems || [],
         });
     } catch (error) {
         console.error("Error fetching poems:", error);
@@ -60,8 +50,7 @@ export async function POST(request: Request) {
             include: {
                 author: {
                     select: { username: true }
-                },
-                ratings: true
+                }
             }
         });
 
